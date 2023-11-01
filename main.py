@@ -8,13 +8,22 @@ headers = {
 }
 
 resposta = requests.get(url, headers=headers)
-soup = BeautifulSoup(resposta.text, 'html.parser')  # Use 'html.parser' em vez de 'lxml'
+soup = BeautifulSoup(resposta.text, 'html.parser')
 
 # Encontre o título do produto usando o seletor CSS apropriado
 titulo_do_produto = soup.select_one("#productTitle")
 
 if titulo_do_produto:
     texto_do_titulo = titulo_do_produto.get_text(strip=True)
-    print(texto_do_titulo)
+    print(f"{texto_do_titulo}")
 else:
     print("Título do produto não encontrado.")
+
+# Encontre o preço do produto usando um seletor CSS mais específico
+preco = soup.select_one(".a-price .a-offscreen")
+
+if preco:
+    texto_do_preco = preco.get_text(strip=True)
+    print(f"{texto_do_preco}")
+else:
+    print("Preço do produto não encontrado.")
