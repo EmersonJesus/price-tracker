@@ -32,4 +32,15 @@ class SpiderAmazon:
             next(arquivo) # Pulando a linha
             linhas = list(tuple(linha) for linha in arquivo)
             
-        #
+        # Abrir conexão com banco de dados
+        print('[i] Conectando com o banco de dados...')
+        print('-' * 80)
+        self.conexao = self.conectarBancoSQL()
+        cursor = self.conexao.cursor()
+        
+        # Pesquisa cada URL do aquivo
+        for linha in linhas:
+            url = linha[0]
+            pagina = request.get(url, headers=self.browserHeader)
+            soup = BeautifulSoup(pagina.content, 'html.parser')
+            
