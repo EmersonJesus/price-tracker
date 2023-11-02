@@ -43,4 +43,11 @@ class SpiderAmazon:
             url = linha[0]
             pagina = request.get(url, headers=self.browserHeader)
             soup = BeautifulSoup(pagina.content, 'html.parser')
-            
+            produto = soup.find(id='#productTitle').get_text()
+            produto = produto.strip()
+            preco = soup.find(id='#priceblock_ourprice').get_text()
+            preco = preco.strip().replace('R$', '').replace('.', '').replace(',', '.')
+            show = produto + '| Preço atual: ' + preco
+            print(f"[i] Consultando {show}")
+            print('-'*80)
+            preco_atual = float(preco)
