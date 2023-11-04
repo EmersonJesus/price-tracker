@@ -1,106 +1,41 @@
-import csv
-import smtplib
-import pyodbc
 import requests
 from bs4 import BeautifulSoup
 
-class SpiderAmazon:
-    def __init__(self):
-        # Arquivo com os produtos
-        self.nomeArquivo = 'lista_de_desejos.txt'
+# URL do produto desejado
+url = 'https://www.amazon.com.br/gp/product/B0BZ7R2MPQ/'
 
-        # User agent
-        self.browserHeader = {
-            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/119.0"
-        }
+# Preço-alvo
+preco_alvo = 1000.00
 
-        # Objeto do pyodbc que será usado para conectar com o banco de dados
-        self.conexao = None
+# User agent
+browser_header = {
+    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/119.0"
+}
 
-    def capturar(self):
-        # Preço do site no momento da consulta
-        sqlInsert = "INSERT INTO tb_produtos (descricao, url, data, hora, preco) VALUES (?, ?, CURDATE(), CURTIME(), ?)"
+# Realiza a solicitação HTTP
+pagina = requests.get(url, headers=browser_header)
+soup = BeautifulSoup(pagina.content, 'html.parser')
+titulo_do_produto = soup.select_one("#productTitle")
 
-        # Abrir o arquivo para leitura
-        print("[i] Abrindo arquivo...")
-        print('-' * 80)
-        with open(self.nomeArquivo, mode='r', encoding='utf-8') as dados:
-            arquivo = csv.reader(dados, delimiter=';')
-            next(arquivo)  # Pulando a linha
-            linhas = list(tuple(linha) for linha in arquivo)
+if titulo_do_produto:
+    produto = titulo_do_produto.get_text(strip=True)
+else:
+    produto = "Título do produto não encontrado."
 
-        # Abrir conexão com o banco de dados
-        print('[i] Conectando com o banco de dados...')
-        print('-' * 80)
-        self.conexao = self.conectarBancoSQL()
-        cursor = self.conexao.cursor()
+# Encontre o elemento de preço atual
+preco_atual_element = soup.select_one(".a-price .a-offscreen")
 
-        # Pesquisa cada URL do arquivo
-        for linha in linhas:
-            url = linha[0]
-            pagina = requests.get(url, headers=self.browserHeader)
-            soup = BeautifulSoup(pagina.content, 'html.parser')
-            produto = soup.find('span', id='productTitle').get_text()
-            produto = produto.strip()
-            preco = soup.find('span', id='priceblock_ourprice').get_text()
-            preco = preco.strip().replace('R$', '').replace('.', '').replace(',', '.')
-            show = f"{produto} | Preço atual: {preco}"
-            print(f"[i] Consultando {show}")
-            print('-' * 80)
-            preco_atual = float(preco)
-            alvo = float(linha[1])
+if preco_atual_element:
+    # Se o elemento existe, obtenha o texto
+    texto_do_preco = preco_atual_element.get_text(strip=True)
+    preco_atual =  texto_do_preco.replace("R$", "").replace(".", "").replace(",", ".").strip()
+    preco_atual = float(preco_atual)
+else:
+    # Se o elemento não existe, defina um preço padrão ou trate de outra forma
+    preco_atual = None  # Ou qualquer outro valor padrão que você deseje
 
-            param = (produto, url, preco_atual)
-            cursor.execute(sqlInsert, param)
-            if preco_atual <= alvo:
-                self.enviarEmail('emersoncruz692@gmail.com', produto, url)
-
-    def conectarBancoSQL(self):
-        servidor = 'localhost'
-        banco = 'base_pessoal'
-        passwd = 'senha do banco de dados'
-        userbd = 'usuario do banco de dados'
-        conexao = None
-
-        try:
-            conexao = pyodbc.connect(
-                f"DRIVER={{MySQL ODBC 8.0 Driver Unicode}};SERVER={servidor};DATABASE={banco};UID={userbd};PWD={passwd}",
-                autocommit=True)
-            print("[i] Conectando com o banco de dados.")
-            print('-' * 80)
-        except (pyodbc.Error, pyodbc.OperationalError) as ex:
-            print(ex.args[0], ex.args[1])
-            conexao = None
-
-        return conexao
-
-    def enviarEmail(self, para, assunto, url):
-        server = smtplib.SMTP('smtp.gmail.com', 587)
-        para = para.strip()
-        assunto = assunto.strip()
-        url = url.strip()
-
-        if len(assunto) > 25:
-            topo = assunto[:25] + '...'
-        else:
-            topo = assunto
-
-        server.ehlo()
-        server.starttls()
-        server.ehlo()
-        server.login('seu_email@gmail.com', 'sua_senha')
-        assunto = f'O preço caiu! Item: {topo}'
-        corpo = f'Acesse agora para ver {assunto}\nLink: {url}'
-        msg = f'Subject: {assunto}\n\n{corpo}'
-        server.sendmail(
-            'seu_email@gmail.com',
-            para,
-            msg.encode('utf8')
-        )
-        print('[i] E-mail enviado!')
-        print('-' * 80)
-        server.quit()
-
-
-amz = SpiderAmazon()
-amz.capturar()
+# Verifica se o preço atual é menor do que o preço-alvo
+if preco_atual is not None and preco_atual < preco_alvo:
+    print(f' Produto: {produto}, Preço Atual: R${preco_atual:.2f}')
+else:
+    print(f'Preço do produto "{produto}" não atingiu o preço-alvo.')
