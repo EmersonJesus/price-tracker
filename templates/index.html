@@ -6,11 +6,11 @@
     <title>Scrape Products</title>
 </head>
 <body>
-    <h1>Products</h1>
-    <ul>
-        {% for product in products  %}
-        <li>{{ product }}</li>
-        {% endfor %}  
-    </ul>
+    <h1>Product Details</h1>
+    <div id="product-details">
+        <h2>{{ product_data.name }}</h2>
+        <img src="{{ product_data.image_url }}" alt="{{ product_data.name }}">
+        <p>R${{ product_data.price }}</p>
+    </div>
 </body>
 </html>
