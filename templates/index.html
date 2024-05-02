@@ -4,25 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Product Price Tracker</title>
-    <style>
-        .product {
-            margin-bottom: 20px;
-        }
-        .product img {
-            max-width: 200px;
-            max-height: 200px;
-            margin-right: 20px;
-        }
-        .product .price {
-            font-size: 18px;
-        }
-        .product .below-target {
-            color: green;
-        }
-        .product .above-target {
-            color: red;
-        }
-    </style>
 </head>
 <body>
     <h1>Product Price Tracker</h1>
@@ -36,9 +17,19 @@
     <h2>Tracked Products:</h2>
     {% for product in products %}
     <div class="product">
-        <h3>{{ product.name }}</h3>
-        <img src="{{ product.image_url }}" alt="{{ product.name }}">
-        <p class="price {% if product.price < product.target_price %} below-target {% else %} above-target {% endif %}">Price: R$ {{ product.price }}</p>
+        <div class="name">{{ product.name }}</div>
+        <img src="{{ product.image_url }}" alt="Product Image">
+        <div class="price">Current Price: R$ {{ product.price }}</div>
+        <div class="target-price">Target Price: R$ {{ product.target_price }}</div>
+        <div class="delete-button">
+            <form action="/delete_product" method="post">
+                <input type="hidden" name="product_id" value="{{ product.doc_id }}">
+                <button type="submit">Delete</button>
+            </form>
+        </div>
+        <div class="view-product">
+            <a href="{{ product.name }}">View Product</a>
+        </div>
     </div>
     {% endfor %}
 </body>

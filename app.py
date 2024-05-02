@@ -84,5 +84,12 @@ def add_product():
     if not product_data.get('error'):
         db.insert({'name': product_data['name'], 'image_url': product_data['image_url'], 'price': product_data['price'], 'target_price': target_price})
     return redirect('/')
+
+@app.route('/delete_product', methods=['POST'])
+def delete_product():
+    product_id = int(request.form['product_id'])
+    db.remove(doc_ids=[product_id])
+    return redirect('/')
+
 if __name__ == "__main__":
     app.run(debug=True)
