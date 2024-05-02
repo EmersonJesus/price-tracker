@@ -36,7 +36,7 @@ def get_user_agent():
     ]
     return random.choice(user_agent_list)
 
-def scrape_product_data(url):
+def scrape_product_data(url, target_price):
     browser_header = {
         "User-Agent": get_user_agent()
     }
@@ -54,11 +54,23 @@ def scrape_product_data(url):
 
         product_price_element = soup.select_one(".a-price .a-offscreen")
         product_price = product_price_element.get_text(strip=True) if product_price_element else "Preço não encontrado"
+        product_price = product_price.replace('R$', '').replace('.', '').replace(',', '.').strip()
+
+        if product_price != "Preço não encontrado":
+            if float(product_price) < float(target_price):
+                price_comparison = "lower"
+            elif float(product_price) == float(target_price):
+                price_comparison = "equal"
+            else:
+                price_comparison = "higher"
+        else:
+            price_comparison = "not_available"
 
         product_data = {
-            "name": product_name,
+            "name": product_name[:50]+"...",
             "image_url": product_image_url,
-            "price": product_price
+            "price": product_price,
+            "price_comparison": price_comparison
         }
 
         return product_data
@@ -80,9 +92,9 @@ def home():
 def add_product():
     product_url = request.form['product_url']
     target_price = request.form['target_price']
-    product_data = scrape_product_data(product_url)
+    product_data = scrape_product_data(product_url, target_price)
     if not product_data.get('error'):
-        db.insert({'name': product_data['name'], 'image_url': product_data['image_url'], 'price': product_data['price'], 'target_price': target_price})
+        db.insert({'name': product_data['name'], 'image_url': product_data['image_url'], 'price': product_data['price'], 'target_price': target_price, 'url': product_url, 'price_comparison': product_data['price_comparison']})
     return redirect('/')
 
 @app.route('/delete_product', methods=['POST'])
