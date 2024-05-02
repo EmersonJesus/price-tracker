@@ -5,38 +5,162 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Product Price Tracker</title>
     <style>
-        .product {
-            margin-bottom: 20px;
-            border: 1px solid #ccc;
+        body {
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        h1, h2 {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .product-price-form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 300px;
+            padding: 20px;
+            border: 1px solid #cccccc;
+            border-radius: 10px;
+            background-color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin: auto;
+            margin-top: 20px; 
+        }
+
+        .product-price-form input {
+            width: 100%;
+            height: 20px;
+            margin-bottom: 10px;
+            padding: 5px;
+            border: 1px solid #cccccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        .add-button button {
+            width: 100%;
             padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: #ffffff;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
         }
+
+        .add-button button:hover {
+            background-color: #0056b3;
+        }
+
+        .product-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .product {
+            border-radius: 10px;
+            background-color: #ffffff;
+            border: 1px solid #cccccc;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            padding: 20px;
+            margin: 20px;
+        }
+
         .product img {
-            max-width: 200px;
-            max-height: 200px;
-            margin-right: 20px;
+            max-width: 100%;
+            border-radius: 10px;
+            margin-bottom: 10px;
         }
+
         .product .name {
             font-weight: bold;
-        }
-        .product .price {
             font-size: 18px;
+            margin-bottom: 10px;
+            color: #333333;
         }
-        .below-target {
-            color: green;
+
+        .product .price {
+            font-size: 16px;
+            color: #666666;
         }
-        .above-target {
-            color: red;
+
+        .product .below-target {
+            color: #1d992d;
         }
+
+        .product .above-target {
+            color: #dc3545;
+        }
+
+        .product .target-price {
+            font-size: 14px;
+            color: #888888;
+            margin-top: 10px;
+        }
+
+        .product .delete-button {
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .delete-button button {
+            background-color: #dc3545;
+            color: #ffffff;
+            border: none;
+            border-radius: 5px;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+        }
+
+        .delete-button button:hover {
+            background-color: #c82333;
+        }
+
+        .view-product {
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .view-product a {
+            color: #007bff;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
     </style>
 </head>
 <body>
     <h1>Product Price Tracker</h1>
-    <form action="/add_product" method="post">
-        <label for="product_url">Product URL:</label><br>
-        <input type="text" id="product_url" name="product_url"><br>
-        <label for="target_price">Target Price (BRL):</label><br>
-        <input type="number" id="target_price" name="target_price" step="0.01"><br><br>
-        <input type="submit" value="Add Product">
+    <form class="product-price-form" action="/add_product" method="post">
+        <div class="product-url-input">
+            <label for="product_url">Product URL:</label><br>
+            <input type="text" id="product_url" name="product_url"><br>
+        </div>
+        <div class="price-input">
+            <label for="target_price">Target Price (BRL):</label><br>
+            <input type="number" id="target_price" name="target_price" step="0.01"><br><br>
+        </div>
+        <div class="add-button">
+            <button type="submit">Add Product</button>
+        </div>
     </form>
     <h2>Tracked Products:</h2>
     {% for product in products %}
