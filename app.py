@@ -93,8 +93,17 @@ def scrape_product_data(url, target_price):
             time.sleep(5)
             continue
 
+def update_product_prices():
+    for product in db.all():
+        product_data = scrape_product_data(product["url"], product["target_price"])
+        if product_data:
+            product_price = product_data["price"]
+            db.update({"price": product_price}, Product.url == product["url"])
+            time.sleep(2)
+
 @app.route("/")
 def home():
+    update_product_prices()
     products = db.all()
     return render_template('index.html', products=products)
 
