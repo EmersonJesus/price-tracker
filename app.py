@@ -1,8 +1,9 @@
 from flask import Flask, render_template, request, redirect
 from bs4 import BeautifulSoup
+from tinydb import TinyDB, Query
 import requests
 import random
-from tinydb import TinyDB, Query
+import time
 
 app = Flask(__name__)
 db = TinyDB('tracked_products.json')
@@ -37,51 +38,60 @@ def get_user_agent():
     return random.choice(user_agent_list)
 
 def scrape_product_data(url, target_price):
-    browser_header = {
-        "User-Agent": get_user_agent()
-    }
-
-    try:
-        response = requests.get(url, headers=browser_header)
-        response.raise_for_status() 
-        soup = BeautifulSoup(response.content, 'html.parser')
-
-        product_title = soup.select_one("#title span")
-        product_name = product_title.get_text(strip=True) if product_title else "Título do produto não encontrado."
-
-        product_image_element = soup.select_one("#imgTagWrapperId img")
-        product_image_url = product_image_element.get("src") if product_image_element else ""
-
-        product_price_element = soup.select_one(".a-price .a-offscreen")
-        product_price = product_price_element.get_text(strip=True) if product_price_element else "Preço não encontrado"
-        product_price = product_price.replace('R$', '').replace('.', '').replace(',', '.').strip()
-
-        if product_price != "Preço não encontrado":
-            if float(product_price) < float(target_price):
-                price_comparison = "lower"
-            elif float(product_price) == float(target_price):
-                price_comparison = "equal"
-            else:
-                price_comparison = "higher"
-        else:
-            price_comparison = "not_available"
-
-        product_data = {
-            "name": product_name[:50]+"...",
-            "image_url": product_image_url,
-            "price": product_price,
-            "price_comparison": price_comparison
+    while True:
+        browser_header = {
+            "User-Agent": get_user_agent()
         }
 
-        return product_data
+        try:
+            response = requests.get(url, headers=browser_header)
+            response.raise_for_status() 
+            soup = BeautifulSoup(response.content, 'html.parser')
 
-    except requests.RequestException as e:
-        print("Erro ao acessar a página:", e)
-        return {"error": "Erro ao acessar a página."}
+            product_title = soup.select_one("#title span")
+            product_image_element = soup.select_one("#imgTagWrapperId img")
+            product_price_element = soup.select_one(".a-price .a-offscreen")
 
-    except Exception as ex:
-        print("Ocorreu um erro inesperado:", ex)
-        return {"error": "Erro inesperado durante a raspagem de dados."}
+            if product_title :
+                product_name = product_title.get_text(strip=True)
+            else :
+                 return scrape_product_data(url, target_price)
+
+            if product_image_element:
+                product_image_url = product_image_element.get("src")
+            else :
+                 return scrape_product_data(url, target_price)
+            
+            if product_price_element:
+                product_price = product_price_element.get_text(strip=True)
+                product_price = product_price.replace('R$', '').replace('.', '').replace(',', '.').strip()
+            else :
+                return scrape_product_data(url, target_price)
+
+            if product_price != "Preço não encontrado":
+                if float(product_price) <= float(target_price):
+                    price_comparison = "lower"
+                elif float(product_price) > float(target_price):
+                    price_comparison = "higher"
+
+            product_data = {
+                "name": product_name[:50]+"...",
+                "image_url": product_image_url,
+                "price": product_price,
+                "price_comparison": price_comparison
+            }
+
+            return product_data
+
+        except requests.RequestException as e:
+            print("Erro ao acessar a página:", e)
+            time.sleep(5)
+            continue
+
+        except Exception as ex:
+            print("Ocorreu um erro inesperado:", ex)
+            time.sleep(5)
+            continue
 
 @app.route("/")
 def home():
