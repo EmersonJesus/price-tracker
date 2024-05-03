@@ -48,62 +48,42 @@ def scrape_product_data(url, target_price):
             response.raise_for_status() 
             soup = BeautifulSoup(response.content, 'html.parser')
 
-            product_title = soup.select_one("#title span")
+            product_title = soup.select_one("#productTitle")
             product_image_element = soup.select_one("#imgTagWrapperId img")
             product_price_element = soup.select_one(".a-price .a-offscreen")
 
-            if product_title :
+            if product_title and product_image_element and product_price_element:
                 product_name = product_title.get_text(strip=True)
-            else :
-                 return scrape_product_data(url, target_price)
-
-            if product_image_element:
                 product_image_url = product_image_element.get("src")
-            else :
-                 return scrape_product_data(url, target_price)
-            
-            if product_price_element:
                 product_price = product_price_element.get_text(strip=True)
-                product_price = product_price.replace('R$', '').replace('.', '').replace(',', '.').strip()
-            else :
-                return scrape_product_data(url, target_price)
+                product_price = float(product_price.replace('R$', '').replace('.', '').replace(',', '.'))
 
-            if product_price != "Preço não encontrado":
-                if float(product_price) <= float(target_price):
+                if product_price <= float(target_price):
                     price_comparison = "lower"
-                elif float(product_price) > float(target_price):
+                else:
                     price_comparison = "higher"
 
-            product_data = {
-                "name": product_name[:50]+"...",
-                "image_url": product_image_url,
-                "price": product_price,
-                "price_comparison": price_comparison
-            }
+                product_data = {
+                    "name": product_name,
+                    "image_url": product_image_url,
+                    "price": product_price,
+                    "price_comparison": price_comparison
+                }
 
-            return product_data
+                return product_data
+            else:
+                time.sleep(5)  
 
         except requests.RequestException as e:
             print("Erro ao acessar a página:", e)
             time.sleep(5)
-            continue
 
         except Exception as ex:
             print("Ocorreu um erro inesperado:", ex)
             time.sleep(5)
-            continue
-
-def update_product_prices():
-    for product in db.all():
-        product_data = scrape_product_data(product["url"], product["target_price"])
-        if product_data:
-            product_price = product_data["price"]
-            db.update({"price": product_price}, Product.url == product["url"])
-            time.sleep(2)
 
 @app.route("/")
 def home():
-    update_product_prices()
     products = db.all()
     return render_template('index.html', products=products)
 
@@ -120,6 +100,15 @@ def add_product():
 def delete_product():
     product_id = int(request.form['product_id'])
     db.remove(doc_ids=[product_id])
+    return redirect('/')
+
+@app.route('/update_prices', methods=['POST'])
+def update_prices():
+    for product in db.all():
+        product_data = scrape_product_data(product["url"], product["target_price"])
+        if product_data:
+            product_price = product_data["price"]
+            db.update({"price": product_price}, Product.url == product["url"])
     return redirect('/')
 
 if __name__ == "__main__":
