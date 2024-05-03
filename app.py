@@ -108,7 +108,8 @@ def update_prices():
         product_data = scrape_product_data(product["url"], product["target_price"])
         if product_data:
             product_price = product_data["price"]
-            db.update({"price": product_price}, Product.url == product["url"])
+            price_comparison  = product_data["price_comparison"]
+            db.update({"price": product_price, "price_comparison": price_comparison}, Product.url == product["url"])
     return redirect('/')
 
 if __name__ == "__main__":
