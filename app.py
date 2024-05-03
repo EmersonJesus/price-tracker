@@ -46,7 +46,7 @@ def scrape_product_data(url, target_price):
         response.raise_for_status() 
         soup = BeautifulSoup(response.content, 'html.parser')
 
-        product_title = soup.select_one("#productTitle")
+        product_title = soup.select_one("#title span")
         product_name = product_title.get_text(strip=True) if product_title else "Título do produto não encontrado."
 
         product_image_element = soup.select_one("#imgTagWrapperId img")
